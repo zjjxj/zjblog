@@ -16,3 +16,7 @@ deploy:
   on:
     branch: master
   local-dir: public
+
+before_install:
+  - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- -- version 0.23.2
+  - export PATH="$HOME/.yarn/bin:$PATH"  
