@@ -97,4 +97,10 @@ theme: landscape
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
-  type: ''
+  type: git
+  repo: git@github.com:zjjxj/zjjxj.github.io.git
+  branch: gh-pages
+
+before_install:
+  - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- -- version 0.23.2
+  - export PATH="$HOME/.yarn/bin:$PATH"
