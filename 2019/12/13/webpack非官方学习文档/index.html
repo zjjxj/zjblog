@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>webpack非官方学习文档 | zhoujie&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Webpack 是一个JavaScript模块打包器，在 Webpack 里一切文件皆模块，通过 Loader 转换文件，通过 Plugin 注入钩子，最后输出由多个模块组合成的文件。Webpack 专注于构建模块化项目。 一.前端构建工具的发展前端技术的发展伴随着各种可以提高开发效率的新思想和框架被发明。但是这些东西都有一个共同点：源代码无法直接运行，必须通过转换后才可以正常运行。构建就是做这件">
+<meta property="og:type" content="article">
+<meta property="og:title" content="webpack非官方学习文档">
+<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;13&#x2F;webpack%E9%9D%9E%E5%AE%98%E6%96%B9%E5%AD%A6%E4%B9%A0%E6%96%87%E6%A1%A3&#x2F;index.html">
+<meta property="og:site_name" content="zhoujie&#39;s blog">
+<meta property="og:description" content="Webpack 是一个JavaScript模块打包器，在 Webpack 里一切文件皆模块，通过 Loader 转换文件，通过 Plugin 注入钩子，最后输出由多个模块组合成的文件。Webpack 专注于构建模块化项目。 一.前端构建工具的发展前端技术的发展伴随着各种可以提高开发效率的新思想和框架被发明。但是这些东西都有一个共同点：源代码无法直接运行，必须通过转换后才可以正常运行。构建就是做这件">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-12-13T03:24:00.000Z">
+<meta property="article:modified_time" content="2019-12-13T03:25:14.921Z">
+<meta property="article:author" content="zhoujie">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="zhoujie&#39;s blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 4.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">zhoujie&#39;s blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-webpack非官方学习文档" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/12/13/webpack%E9%9D%9E%E5%AE%98%E6%96%B9%E5%AD%A6%E4%B9%A0%E6%96%87%E6%A1%A3/" class="article-date">
+  <time datetime="2019-12-13T03:24:00.000Z" itemprop="datePublished">2019-12-13</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      webpack非官方学习文档
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Webpack 是一个JavaScript模块打包器，在 Webpack 里一切文件皆模块，通过 Loader 转换文件，通过 Plugin 注入钩子，最后输出由多个模块组合成的文件。Webpack 专注于构建模块化项目。</p>
+<h2 id="一-前端构建工具的发展"><a href="#一-前端构建工具的发展" class="headerlink" title="一.前端构建工具的发展"></a>一.前端构建工具的发展</h2><p>前端技术的发展伴随着各种可以提高开发效率的新思想和框架被发明。但是这些东西都有一个共同点：源代码无法直接运行，必须通过转换后才可以正常运行。<br>构建就是做这件事情，把源代码转换成发布到线上的可执行 JavaScrip、CSS、HTML 代码，包括如下内容。  </p>
+<p>代码转换：TypeScript 编译成 JavaScript、SCSS 编译成 CSS 等。<br>文件优化：压缩 JavaScript、CSS、HTML 代码，压缩合并图片等。<br>代码分割：提取多个页面的公共代码、提取首屏不需要执行部分的代码让其异步加载。<br>模块合并：在采用模块化的项目里会有很多个模块和文件，需要构建功能把模块分类合并成一个文件。<br>自动刷新：监听本地源代码的变化，自动重新构建、刷新浏览器。<br>代码校验：在代码被提交到仓库前需要校验代码是否符合规范，以及单元测试是否通过。<br>自动发布：更新完代码后，自动构建出线上发布代码并传输给发布系统。<br>构建其实是工程化、自动化思想在前端开发中的体现，把一系列流程用代码去实现，让代码自动化地执行这一系列复杂的流程。 构建给前端开发注入了更大的活力，解放了我们的生产力。</p>
+<p>Npm Script 和 Grunt 时代：Web 开发要做的事情变多，流程复杂，自动化思想被引入，用于简化流程。<br>Gulp 时代：开始出现一些新语言用于提高开发效率，流式处理思想的出现是为了简化文件转换的流程，例如将 ES6 转换成 ES5。<br>Webpack 时代：由于单页应用的流行，一个网页的功能和实现代码变得庞大，Web 开发向模块化改进。</p>
+<h2 id="二-webpack-配置"><a href="#二-webpack-配置" class="headerlink" title="二.webpack 配置"></a>二.webpack 配置</h2><p>想让源文件加入到构建流程中去被 Webpack 控制，配置 entry。<br>想自定义输出文件的位置和名称，配置 output。<br>想自定义寻找依赖模块时的策略，配置 resolve。<br>想自定义解析和转换文件的策略，配置 module，通常是配置 module.rules 里的 Loader。<br>其它的大部分需求可能要通过 Plugin 去实现，配置 plugin。</p>
+<h2 id="三-浅析webpack构建原理"><a href="#三-浅析webpack构建原理" class="headerlink" title="三.浅析webpack构建原理"></a>三.浅析webpack构建原理</h2><p>webpack是用 Node.js 开发的。<br>Webpack 本质上是一种事件流的机制，它的工作流程就是将各个插件串联起来，而实现这一切的核心就是 tapable。webpack中最核心的Compiler和Compilation都是Tapable的实例。tapable是一个专注于自定义事件的库。在整个构建的生命周期中，webpack会在关键阶段暴露出一些钩子函数，也就是触发一些特定的事件，插件的原理就是 钩入(hook) 到在每个编译(compilation)中触发的关键事件。<br>webpack另一个重要的部分就是loader，webpack之所以号称能够打包一切也是因为loader机制。loader 让 webpack 能够去处理那些非 JavaScript 文件（webpack 自身只理解 JavaScript）。loader 可以将所有类型的文件转换为 webpack 能够处理的有效模块，然后你就可以利用 webpack 的打包能力，对它们进行处理。</p>
+<h2 id="构建过程"><a href="#构建过程" class="headerlink" title="构建过程"></a>构建过程</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2019/12/13/webpack%E9%9D%9E%E5%AE%98%E6%96%B9%E5%AD%A6%E4%B9%A0%E6%96%87%E6%A1%A3/" data-id="ck43m2ejh0006sf0o73h474bg" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/12/13/react%E5%AD%A6%E4%B9%A0%E9%93%BE%E6%8E%A5/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          react学习链接
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/12/13/%E5%B0%8F%E7%A8%8B%E5%BA%8F%E7%AC%94%E8%AE%B0/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">小程序笔记</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/12/">December 2019</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/12/13/webpack%E5%8E%9F%E7%90%86%E6%B5%85%E6%9E%90%E4%B9%8B%E6%89%93%E5%8C%85%E4%BC%98%E5%8C%96/">webpack原理浅析之打包优化</a>
+          </li>
+        
+          <li>
+            <a href="/2019/12/13/webpack%E5%8E%9F%E7%90%86%E6%B5%85%E6%9E%90%E4%B9%8B%E4%BB%A3%E7%A0%81%E5%88%86%E5%89%B2/">webpack原理浅析之代码分割</a>
+          </li>
+        
+          <li>
+            <a href="/2019/12/13/Webpack%E5%8E%9F%E7%90%86%E6%B5%85%E6%9E%90%E4%B9%8B%E6%9E%84%E5%BB%BA%E6%B5%81%E7%A8%8B%E6%A2%B3%E7%90%86/">Webpack原理浅析之构建流程梳理</a>
+          </li>
+        
+          <li>
+            <a href="/2019/12/13/Webpack%E5%8E%9F%E7%90%86%E6%B5%85%E6%9E%90%E4%B9%8BHMR/">Webpack原理浅析之HMR</a>
+          </li>
+        
+          <li>
+            <a href="/2019/12/13/requestAnimationFrame%E5%92%8CrequestIdleCallback%E5%B0%8F%E8%AE%B0/">requestAnimationFrame和requestIdleCallback小记</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2019 zhoujie<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>

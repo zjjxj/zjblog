@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>webpack原理浅析之代码分割 | zhoujie&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="code splitting是webpack最引人注目的特性之一。他可以把代码分离到不同的bundle中，然后可以按需加载或并行加载这些文件。 一.可以实现代码分割的方式1.入口起点：使用 entry 配置手动地分离代码。这是迄今为止最简单、最直观的分离代码的方式。不过，这种方式手动配置较多，并有一些隐患： 如果入口 chunk 之间包含一些重复的模块，那些重复模块都会被引入到各个 bundle">
+<meta property="og:type" content="article">
+<meta property="og:title" content="webpack原理浅析之代码分割">
+<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;13&#x2F;webpack%E5%8E%9F%E7%90%86%E6%B5%85%E6%9E%90%E4%B9%8B%E4%BB%A3%E7%A0%81%E5%88%86%E5%89%B2&#x2F;index.html">
+<meta property="og:site_name" content="zhoujie&#39;s blog">
+<meta property="og:description" content="code splitting是webpack最引人注目的特性之一。他可以把代码分离到不同的bundle中，然后可以按需加载或并行加载这些文件。 一.可以实现代码分割的方式1.入口起点：使用 entry 配置手动地分离代码。这是迄今为止最简单、最直观的分离代码的方式。不过，这种方式手动配置较多，并有一些隐患： 如果入口 chunk 之间包含一些重复的模块，那些重复模块都会被引入到各个 bundle">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-12-13T03:37:54.000Z">
+<meta property="article:modified_time" content="2019-12-13T03:43:28.115Z">
+<meta property="article:author" content="zhoujie">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="zhoujie&#39;s blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 4.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">zhoujie&#39;s blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-webpack原理浅析之代码分割" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/12/13/webpack%E5%8E%9F%E7%90%86%E6%B5%85%E6%9E%90%E4%B9%8B%E4%BB%A3%E7%A0%81%E5%88%86%E5%89%B2/" class="article-date">
+  <time datetime="2019-12-13T03:37:54.000Z" itemprop="datePublished">2019-12-13</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      webpack原理浅析之代码分割
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>code splitting是webpack最引人注目的特性之一。他可以把代码分离到不同的bundle中，然后可以按需加载或并行加载这些文件。</p>
+<h2 id="一-可以实现代码分割的方式"><a href="#一-可以实现代码分割的方式" class="headerlink" title="一.可以实现代码分割的方式"></a>一.可以实现代码分割的方式</h2><h3 id="1-入口起点：使用-entry-配置手动地分离代码。"><a href="#1-入口起点：使用-entry-配置手动地分离代码。" class="headerlink" title="1.入口起点：使用 entry 配置手动地分离代码。"></a>1.入口起点：使用 entry 配置手动地分离代码。</h3><p>这是迄今为止最简单、最直观的分离代码的方式。不过，这种方式手动配置较多，并有一些隐患：</p>
+<p>如果入口 chunk 之间包含一些重复的模块，那些重复模块都会被引入到各个 bundle 中。<br>这种方法不够灵活，并且不能动态地将核心应用程序逻辑中的代码拆分出来。</p>
+<h3 id="2-SplitChunksPlugin"><a href="#2-SplitChunksPlugin" class="headerlink" title="2.SplitChunksPlugin"></a>2.SplitChunksPlugin</h3><p>SplitChunksPlugin 插件可以将公共的依赖模块提取到已有的 entry chunk 中，或者提取到一个新生成的 chunk。</p>
+<h3 id="3-动态导入-懒加载或者按需加载"><a href="#3-动态导入-懒加载或者按需加载" class="headerlink" title="3.动态导入(懒加载或者按需加载)"></a>3.动态导入(懒加载或者按需加载)</h3><p>当涉及到动态代码拆分时，webpack 提供了两个类似的技术。第一种，也是推荐选择的方式是，使用符合 ECMAScript 提案 的 import() 语法 来实现动态导入。第二种，则是 webpack 的遗留功能，使用 webpack 特定的 require.ensure。</p>
+<h2 id="二-SplitChunksPlugin"><a href="#二-SplitChunksPlugin" class="headerlink" title="二.SplitChunksPlugin"></a>二.SplitChunksPlugin</h2><p>Webpack4.0以后，我们可谓是告别了头疼的配置问题。Webpack引入了mode的配置选项，提供’production’,’development’和’none’三种模式选择，告知 webpack 使用相应环境的内置优化。</p>
+<p>当我们开启不同的模式，就意味着载入了相对的默认配置。默认情况下，mode的值为’production’。 我们可以去官网看看production模式下都有哪些默认配置。</p>
+<p>production模式下，SplitChunksPlugin插件是默认被启用的，默认配置如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">module.exports &#x3D; &#123;</span><br><span class="line">    &#x2F;&#x2F;...</span><br><span class="line">    optimization: &#123;</span><br><span class="line">      splitChunks: &#123;</span><br><span class="line">        chunks: &#39;async&#39;,</span><br><span class="line">        minSize: 30000, &#x2F;&#x2F; 打包出的chunk最小时30kb 否则不打包</span><br><span class="line">        maxSize: 0,</span><br><span class="line">        minChunks: 1, &#x2F;&#x2F; 至少被1个module引用</span><br><span class="line">        maxAsyncRequests: 5,  &#x2F;&#x2F;  </span><br><span class="line">        maxInitialRequests: 3, &#x2F;&#x2F; 初始化时最多三个请求</span><br><span class="line">        automaticNameDelimiter: &#39;~&#39;, &#x2F;&#x2F; 名字中间的分隔符</span><br><span class="line">        name: true, &#x2F;&#x2F; chunk的名字，如果设成true，会根据被提取的chunk自动生成</span><br><span class="line">        cacheGroups: &#123;</span><br><span class="line">          vendors: &#123;</span><br><span class="line">            test: &#x2F;[\\&#x2F;]node_modules[\\&#x2F;]&#x2F;, &#x2F;&#x2F; 文件匹配规则</span><br><span class="line">            priority: -10 &#x2F;&#x2F; 优先级</span><br><span class="line">          &#125;,</span><br><span class="line">          default: &#123;</span><br><span class="line">            minChunks: 2,</span><br><span class="line">            priority: -20,</span><br><span class="line">            reuseExistingChunk: true &#x2F;&#x2F; 当module未变时，是否可以使用之前的chunk</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>一些重要的配置项：</p>
+<p>chunks——表示哪些代码需要优化 有三个可选值：initial(初始块)、async(按需加载块)、all(全部块)，默认为async。<br>initial, all模式 会将所有来自node_modules的模块分配到一个叫vendors的缓存组；所有重复引用至少两次的代码，会被分配到default的缓存组。<br>initial模式下会分开优化打包异步和非异步模块。而all会把异步和非异步同时进行优化打包。<br>cacheGroups——可以自定义配置打包块<br>webpack默认的打包chunk优化，只会影响按需加载的模块，也就是说只有异步加载的模块才会有默认打包行为。（import().then()，require.ensure，react-router按需加载）</p>
+<h2 id="三-Code-Splitting实现原理"><a href="#三-Code-Splitting实现原理" class="headerlink" title="三.Code Splitting实现原理"></a>三.Code Splitting实现原理</h2><p>首先我们依然创建一个简单入口模块index.js和两个依赖模块foo.js和bar.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; index.js</span><br><span class="line">&#39;use strict&#39;;</span><br><span class="line">import(&#x2F;* webpackChunkName: &quot;foo&quot; *&#x2F; &#39;.&#x2F;foo&#39;).then(foo &#x3D;&gt; &#123;</span><br><span class="line">    console.log(foo());</span><br><span class="line">&#125;)</span><br><span class="line">import(&#x2F;* webpackChunkName: &quot;bar&quot; *&#x2F; &#39;.&#x2F;bar&#39;).then(bar &#x3D;&gt; &#123;</span><br><span class="line">    console.log(bar());</span><br><span class="line">&#125;)</span><br><span class="line">&#x2F;&#x2F; foo.js</span><br><span class="line">&#39;use strict&#39;;</span><br><span class="line">exports.foo &#x3D; function () &#123;</span><br><span class="line">    return 2;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;&#x2F; bar.js</span><br><span class="line">&#39;use strict&#39;;</span><br><span class="line">exports.bar &#x3D; function () &#123;</span><br><span class="line">    return 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>webpack配置如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var path &#x3D; require(&quot;path&quot;);</span><br><span class="line"></span><br><span class="line">module.exports &#x3D; &#123;</span><br><span class="line">    entry: path.join(__dirname, &#39;index.js&#39;),</span><br><span class="line">    output: &#123;</span><br><span class="line">        path: path.join(__dirname, &#39;outs&#39;),</span><br><span class="line">        filename: &#39;index.js&#39;,</span><br><span class="line">        chunkFilename: &#39;[name].bundle.js&#39;</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>打包结果(去掉了部分注释)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br></pre></td><td class="code"><pre><span class="line">(function(modules) &#123; &#x2F;&#x2F; webpackBootstrap</span><br><span class="line">    &#x2F;&#x2F; install a JSONP callback for chunk loading</span><br><span class="line">    var parentJsonpFunction &#x3D; window[&quot;webpackJsonp&quot;];</span><br><span class="line">    window[&quot;webpackJsonp&quot;] &#x3D; function webpackJsonpCallback(chunkIds, moreModules, executeModules) &#123;</span><br><span class="line">        &#x2F;&#x2F; add &quot;moreModules&quot; to the modules object,</span><br><span class="line">        &#x2F;&#x2F; then flag all &quot;chunkIds&quot; as loaded and fire callback</span><br><span class="line">        var moduleId, chunkId, i &#x3D; 0, resolves &#x3D; [], result;</span><br><span class="line">        for(;i &lt; chunkIds.length; i++) &#123;</span><br><span class="line">            chunkId &#x3D; chunkIds[i];</span><br><span class="line">            if(installedChunks[chunkId]) &#123;</span><br><span class="line">                resolves.push(installedChunks[chunkId][0]);</span><br><span class="line">            &#125;</span><br><span class="line">            installedChunks[chunkId] &#x3D; 0;</span><br><span class="line">        &#125;</span><br><span class="line">        for(moduleId in moreModules) &#123;</span><br><span class="line">            if(Object.prototype.hasOwnProperty.call(moreModules, moduleId)) &#123;</span><br><span class="line">                modules[moduleId] &#x3D; moreModules[moduleId];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        if(parentJsonpFunction) parentJsonpFunction(chunkIds, moreModules, executeModules);</span><br><span class="line">        while(resolves.length) &#123;</span><br><span class="line">            resolves.shift()();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    &#x2F;&#x2F; The module cache</span><br><span class="line">    var installedModules &#x3D; &#123;&#125;;</span><br><span class="line">    &#x2F;&#x2F; objects to store loaded and loading chunks</span><br><span class="line">    var installedChunks &#x3D; &#123;</span><br><span class="line">        2: 0</span><br><span class="line">    &#125;;</span><br><span class="line">    &#x2F;&#x2F; The require function</span><br><span class="line">    function __webpack_require__(moduleId) &#123;</span><br><span class="line">        &#x2F;&#x2F; Check if module is in cache</span><br><span class="line">        if(installedModules[moduleId]) &#123;</span><br><span class="line">            return installedModules[moduleId].exports;</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F; Create a new module (and put it into the cache)</span><br><span class="line">        var module &#x3D; installedModules[moduleId] &#x3D; &#123;</span><br><span class="line">            i: moduleId,</span><br><span class="line">            l: false,</span><br><span class="line">            exports: &#123;&#125;</span><br><span class="line">        &#125;;</span><br><span class="line">        &#x2F;&#x2F; Execute the module function</span><br><span class="line">        modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);</span><br><span class="line">        &#x2F;&#x2F; Flag the module as loaded</span><br><span class="line">        module.l &#x3D; true;</span><br><span class="line">        &#x2F;&#x2F; Return the exports of the module</span><br><span class="line">        return module.exports;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F; This file contains only the entry chunk.</span><br><span class="line">    &#x2F;&#x2F; The chunk loading function for additional chunks</span><br><span class="line">    __webpack_require__.e &#x3D; function requireEnsure(chunkId) &#123;</span><br><span class="line">        var installedChunkData &#x3D; installedChunks[chunkId];</span><br><span class="line">        if(installedChunkData &#x3D;&#x3D;&#x3D; 0) &#123;</span><br><span class="line">            return new Promise(function(resolve) &#123; resolve(); &#125;);</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F; a Promise means &quot;currently loading&quot;.</span><br><span class="line">        if(installedChunkData) &#123;</span><br><span class="line">            return installedChunkData[2];</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F; setup Promise in chunk cache</span><br><span class="line">        var promise &#x3D; new Promise(function(resolve, reject) &#123;</span><br><span class="line">            installedChunkData &#x3D; installedChunks[chunkId] &#x3D; [resolve, reject];</span><br><span class="line">        &#125;);</span><br><span class="line">        installedChunkData[2] &#x3D; promise;</span><br><span class="line">        &#x2F;&#x2F; start chunk loading</span><br><span class="line">        var head &#x3D; document.getElementsByTagName(&#39;head&#39;)[0];</span><br><span class="line">        var script &#x3D; document.createElement(&#39;script&#39;);</span><br><span class="line">        script.type &#x3D; &#39;text&#x2F;javascript&#39;;</span><br><span class="line">        script.charset &#x3D; &#39;utf-8&#39;;</span><br><span class="line">        script.async &#x3D; true;</span><br><span class="line">        script.timeout &#x3D; 120000;</span><br><span class="line">        if (__webpack_require__.nc) &#123;</span><br><span class="line">            script.setAttribute(&quot;nonce&quot;, __webpack_require__.nc);</span><br><span class="line">        &#125;</span><br><span class="line">        script.src &#x3D; __webpack_require__.p + &quot;&quot; + (&#123;&quot;0&quot;:&quot;foo&quot;,&quot;1&quot;:&quot;bar&quot;&#125;[chunkId]||chunkId) + &quot;.bundle.js&quot;;</span><br><span class="line">        var timeout &#x3D; setTimeout(onScriptComplete, 120000);</span><br><span class="line">        script.onerror &#x3D; script.onload &#x3D; onScriptComplete;</span><br><span class="line">        function onScriptComplete() &#123;</span><br><span class="line">            &#x2F;&#x2F; avoid mem leaks in IE.</span><br><span class="line">            script.onerror &#x3D; script.onload &#x3D; null;</span><br><span class="line">            clearTimeout(timeout);</span><br><span class="line">            var chunk &#x3D; installedChunks[chunkId];</span><br><span class="line">            if(chunk !&#x3D;&#x3D; 0) &#123;</span><br><span class="line">                if(chunk) &#123;</span><br><span class="line">                    chunk[1](new Error(&#39;Loading chunk &#39; + chunkId + &#39; failed.&#39;));</span><br><span class="line">                &#125;</span><br><span class="line">                installedChunks[chunkId] &#x3D; undefined;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">        head.appendChild(script);</span><br><span class="line">        return promise;</span><br><span class="line">    &#125;;</span><br><span class="line">    &#x2F;&#x2F; expose the modules object (__webpack_modules__)</span><br><span class="line">    __webpack_require__.m &#x3D; modules;</span><br><span class="line">    &#x2F;&#x2F; expose the module cache</span><br><span class="line">    __webpack_require__.c &#x3D; installedModules;</span><br><span class="line">    &#x2F;&#x2F; define getter function for harmony exports</span><br><span class="line">    __webpack_require__.d &#x3D; function(exports, name, getter) &#123;</span><br><span class="line">        if(!__webpack_require__.o(exports, name)) &#123;</span><br><span class="line">            Object.defineProperty(exports, name, &#123;</span><br><span class="line">                configurable: false,</span><br><span class="line">                enumerable: true,</span><br><span class="line">                get: getter</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    &#x2F;&#x2F; getDefaultExport function for compatibility with non-harmony modules</span><br><span class="line">    __webpack_require__.n &#x3D; function(module) &#123;</span><br><span class="line">        var getter &#x3D; module &amp;&amp; module.__esModule ?</span><br><span class="line">            function getDefault() &#123; return module[&#39;default&#39;]; &#125; :</span><br><span class="line">            function getModuleExports() &#123; return module; &#125;;</span><br><span class="line">        __webpack_require__.d(getter, &#39;a&#39;, getter);</span><br><span class="line">        return getter;</span><br><span class="line">    &#125;;</span><br><span class="line">    &#x2F;&#x2F; Object.prototype.hasOwnProperty.call</span><br><span class="line">    __webpack_require__.o &#x3D; function(object, property) &#123; return Object.prototype.hasOwnProperty.call(object, property); &#125;;</span><br><span class="line">    &#x2F;&#x2F; __webpack_public_path__</span><br><span class="line">    __webpack_require__.p &#x3D; &quot;&quot;;</span><br><span class="line">    &#x2F;&#x2F; on error function for async loading</span><br><span class="line">    __webpack_require__.oe &#x3D; function(err) &#123; console.error(err); throw err; &#125;;</span><br><span class="line">    &#x2F;&#x2F; Load entry module and return exports</span><br><span class="line">    return __webpack_require__(__webpack_require__.s &#x3D; 0);</span><br><span class="line">&#125;)</span><br><span class="line">([</span><br><span class="line">(function(module, exports, __webpack_require__) &#123;</span><br><span class="line">    &quot;use strict&quot;;</span><br><span class="line">    __webpack_require__.e&#x2F;* import() *&#x2F;(0).then(__webpack_require__.bind(null, 1)).then(foo &#x3D;&gt; &#123;</span><br><span class="line">        console.log(foo());</span><br><span class="line">    &#125;)</span><br><span class="line">    __webpack_require__.e&#x2F;* import() *&#x2F;(1).then(__webpack_require__.bind(null, 2)).then(bar &#x3D;&gt; &#123;</span><br><span class="line">        console.log(bar());</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;)</span><br><span class="line">]);</span><br></pre></td></tr></table></figure>
+<p>可以看出import()返回的是一个Promise<br>通过动态脚本的注入实现异步加载模块。<br>再通过webpackJsonp作为模块加载和执行完成的回调，从而触发import的resolve。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2019/12/13/webpack%E5%8E%9F%E7%90%86%E6%B5%85%E6%9E%90%E4%B9%8B%E4%BB%A3%E7%A0%81%E5%88%86%E5%89%B2/" data-id="ck43m2ejh0005sf0ob8h64fdf" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/12/13/webpack%E5%8E%9F%E7%90%86%E6%B5%85%E6%9E%90%E4%B9%8B%E6%89%93%E5%8C%85%E4%BC%98%E5%8C%96/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          webpack原理浅析之打包优化
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/12/13/Webpack%E5%8E%9F%E7%90%86%E6%B5%85%E6%9E%90%E4%B9%8B%E6%9E%84%E5%BB%BA%E6%B5%81%E7%A8%8B%E6%A2%B3%E7%90%86/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Webpack原理浅析之构建流程梳理</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/12/">December 2019</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/12/13/webpack%E5%8E%9F%E7%90%86%E6%B5%85%E6%9E%90%E4%B9%8B%E6%89%93%E5%8C%85%E4%BC%98%E5%8C%96/">webpack原理浅析之打包优化</a>
+          </li>
+        
+          <li>
+            <a href="/2019/12/13/webpack%E5%8E%9F%E7%90%86%E6%B5%85%E6%9E%90%E4%B9%8B%E4%BB%A3%E7%A0%81%E5%88%86%E5%89%B2/">webpack原理浅析之代码分割</a>
+          </li>
+        
+          <li>
+            <a href="/2019/12/13/Webpack%E5%8E%9F%E7%90%86%E6%B5%85%E6%9E%90%E4%B9%8B%E6%9E%84%E5%BB%BA%E6%B5%81%E7%A8%8B%E6%A2%B3%E7%90%86/">Webpack原理浅析之构建流程梳理</a>
+          </li>
+        
+          <li>
+            <a href="/2019/12/13/Webpack%E5%8E%9F%E7%90%86%E6%B5%85%E6%9E%90%E4%B9%8BHMR/">Webpack原理浅析之HMR</a>
+          </li>
+        
+          <li>
+            <a href="/2019/12/13/requestAnimationFrame%E5%92%8CrequestIdleCallback%E5%B0%8F%E8%AE%B0/">requestAnimationFrame和requestIdleCallback小记</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2019 zhoujie<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>
